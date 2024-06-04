@@ -29,7 +29,7 @@ spring:
         globally_quoted_identifiers: true
         format_sql: true
 
-  # settings to run files in this folder src/main/resources/data. This .sql files ara empty as we are using jpa to create data/schema, but added these files for info purpose in case we would like to define our own.
+  # settings to run scripts in this folder src/main/resources/data. Note: To run the scripts set mode: always, then revert to mode: never
   sql:
     init:
       mode: never
