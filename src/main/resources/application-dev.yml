@@ -10,7 +10,7 @@ POSTGRES_HOST: localhost
 POSTGRES_PORT: 5432
 
 # email config
-EMAIL_HOST: smpt.gmail.com
+EMAIL_HOST: smtp.gmail.com
 EMAIL_PORT: 587
 EMAIL_ID: ${EMAIL_ID}
 EMAIL_PASSWORD: ${EMAIL_PASSWORD}
