@@ -1,10 +1,14 @@
 package com.yvolabs.securedocs.utils;
 
+import com.yvolabs.securedocs.dto.User;
+import com.yvolabs.securedocs.entity.CredentialEntity;
 import com.yvolabs.securedocs.entity.RoleEntity;
 import com.yvolabs.securedocs.entity.UserEntity;
+import org.springframework.beans.BeanUtils;
 
 import java.util.UUID;
 
+import static com.yvolabs.securedocs.constant.Constants.NINETY_DAYS;
 import static java.time.LocalDateTime.now;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 
@@ -33,7 +37,23 @@ public class UserUtils {
                 .phone(EMPTY)
                 .bio(EMPTY)
                 .imageUrl("https://cdn-icons-png.flaticon.com/512/149/149071.png")
-                .roles(role)
+                .role(role)
                 .build();
+    }
+
+    public static User fromUserEntity(UserEntity userEntity, RoleEntity role, CredentialEntity credentialEntity) {
+        User user = new User();
+        BeanUtils.copyProperties(userEntity, user);
+        user.setLastLogin(userEntity.getLastLogin().toString());
+        user.setCredentialsNonExpired(isCredentialsNonExpired(credentialEntity));
+        user.setCreatedAt(userEntity.getCreatedAt().toString());
+        user.setUpdatedAt(userEntity.getUpdatedAt().toString());
+        user.setRole(role.getName());
+        user.setAuthorities(role.getAuthorities().getValue());
+        return user;
+    }
+
+    public static boolean isCredentialsNonExpired(CredentialEntity credentialEntity) {
+        return credentialEntity.getUpdatedAt().plusDays(NINETY_DAYS).isAfter(now());
     }
 }

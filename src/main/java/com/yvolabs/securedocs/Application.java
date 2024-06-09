@@ -11,8 +11,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
 /**
  * @author Yvonne N
  *
- * @apiNote @EnableJpaAuditing will allow classes annotated with Example - @EntityListeners, @EventListener to work
- * @implNote  @EnableAsync - used if we have any @Async in the project
+ * @apiNote {@code @EnableJpaAuditing} will allow classes annotated with Example - @EntityListeners, @EventListener to work
+ * @implNote  {@code @EnableAsync} - used if we have any @Async in the project
  * @see com.yvolabs.securedocs.entity.Auditable  - @EntityListeners
  * @see com.yvolabs.securedocs.event.listener.UserEventListener - @EventListener
  * @see com.yvolabs.securedocs.service.impl.EmailServiceImpl - @Async
@@ -35,8 +35,9 @@ public class Application {
     public CommandLineRunner dbInitializeRoles(RoleRepository roleRepository) {
         return args -> {
 
-            /* Just Run Once to seed some roles to db, left for info purpose
+            //Just Run Once to seed some roles to db, left for info purpose
 
+            /*
             RequestContext.setUserId(0L); // sets the context userId @see Auditable::createdBy, userId 0 will be the System User
 
             RoleEntity userRole = RoleEntity.builder()

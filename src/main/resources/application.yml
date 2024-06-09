@@ -66,11 +66,14 @@ spring:
     verify:
       host: ${VERIFY_EMAIL_HOST}
 
-#server
 server:
   port: ${CONTAINER_PORT:8080}
   error:
     path: /user/error
     whitelabel:
       enabled: false
+
+jwt:
+  expiration: ${JWT_EXPIRATION}
+  secret: ${JWT_SECRET}
 
