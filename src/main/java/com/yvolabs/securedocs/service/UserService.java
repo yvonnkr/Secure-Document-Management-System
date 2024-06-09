@@ -1,6 +1,9 @@
 package com.yvolabs.securedocs.service;
 
+import com.yvolabs.securedocs.dto.User;
+import com.yvolabs.securedocs.entity.CredentialEntity;
 import com.yvolabs.securedocs.entity.RoleEntity;
+import com.yvolabs.securedocs.enumeration.LoginType;
 
 /**
  * @author Yvonne N
@@ -15,4 +18,12 @@ public interface UserService {
     RoleEntity getRoleName(String name);
 
     void verifyAccountKey(String key);
+
+    void updateLoginAttempt(String email, LoginType loginType);
+
+    User getUserByUserId(String userId);
+
+    User getUserByEmail(String email);
+
+    CredentialEntity getUserCredentialById(Long userId);
 }

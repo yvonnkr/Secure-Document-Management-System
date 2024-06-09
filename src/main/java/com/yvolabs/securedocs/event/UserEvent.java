@@ -3,6 +3,7 @@ package com.yvolabs.securedocs.event;
 import com.yvolabs.securedocs.entity.UserEntity;
 import com.yvolabs.securedocs.enumeration.EventType;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,6 +18,7 @@ import java.util.Map;
 @Getter
 @Setter
 @AllArgsConstructor
+@Builder
 public class UserEvent {
 
     private UserEntity user;
