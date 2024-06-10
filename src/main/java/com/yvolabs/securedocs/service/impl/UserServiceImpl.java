@@ -18,6 +18,12 @@ import com.yvolabs.securedocs.repository.RoleRepository;
 import com.yvolabs.securedocs.repository.UserRepository;
 import com.yvolabs.securedocs.service.UserService;
 import com.yvolabs.securedocs.utils.UserUtils;
+import dev.samstevens.totp.code.CodeGenerator;
+import dev.samstevens.totp.code.CodeVerifier;
+import dev.samstevens.totp.code.DefaultCodeGenerator;
+import dev.samstevens.totp.code.DefaultCodeVerifier;
+import dev.samstevens.totp.time.SystemTimeProvider;
+import dev.samstevens.totp.time.TimeProvider;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +34,8 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Map;
 
-import static com.yvolabs.securedocs.utils.UserUtils.fromUserEntity;
+import static com.yvolabs.securedocs.utils.UserUtils.*;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 
 /**
@@ -141,6 +148,62 @@ public class UserServiceImpl implements UserService {
     public CredentialEntity getUserCredentialById(Long userId) {
         return credentialRepository.getCredentialByUserEntityId(userId)
                 .orElseThrow(() -> new ApiException("Unable to find user credential by id: " + userId));
+    }
+
+    @Override
+    public User setUpMfa(Long id) {
+        UserEntity userEntity = getUserEntityById(id);
+        String codeSecret = qrCodeSecret.get();
+        userEntity.setQrCodeImageUri(qrCodeImageUri.apply(userEntity.getEmail(), codeSecret));
+        userEntity.setQrCodeSecret(codeSecret);
+        userEntity.setMfa(true);
+        userRepository.save(userEntity);
+        return fromUserEntity(userEntity, userEntity.getRole(), getUserCredentialById(userEntity.getId()));
+    }
+
+    @Override
+    public User cancelMfa(Long id) {
+        UserEntity userEntity = getUserEntityById(id);
+        userEntity.setMfa(false);
+        userEntity.setQrCodeSecret(EMPTY);
+        userEntity.setQrCodeImageUri(EMPTY);
+        userRepository.save(userEntity);
+        return fromUserEntity(userEntity, userEntity.getRole(), getUserCredentialById(userEntity.getId()));
+    }
+
+    @Override
+    public User verifyQrCode(String userId, String qrCode) {
+        UserEntity userEntity = getUserEntityByUserId(userId);
+        boolean isVerified = verifyCode(qrCode, userEntity.getQrCodeSecret());
+        log.info("isQrCodeVerified : {}", isVerified);
+        return fromUserEntity(userEntity, userEntity.getRole(), getUserCredentialById(userEntity.getId()));
+
+    }
+
+    /**
+     *
+     * @param qrCode is the code received by user after scanning the qrCode, usually some digits
+     * @param qrCodeSecret is the qrSecret saved during setup
+     * @return a boolean, throws if verification failed
+     */
+    private boolean verifyCode(String qrCode, String qrCodeSecret) {
+        TimeProvider timeProvider = new SystemTimeProvider();
+        CodeGenerator codeGenerator = new DefaultCodeGenerator();
+        CodeVerifier codeVerifier = new DefaultCodeVerifier(codeGenerator, timeProvider);
+        if (codeVerifier.isValidCode(qrCodeSecret, qrCode)) {
+            return true;
+        } else {
+            throw new ApiException("Invalid QR Code. Please try again");
+        }
+
+    }
+
+    private UserEntity getUserEntityByUserId(String userId) {
+        return userRepository.findUserByUserId(userId).orElseThrow(() -> new ApiException("User not found by userId: " + userId));
+    }
+
+    private UserEntity getUserEntityById(Long id) {
+        return userRepository.findById(id).orElseThrow(() -> new ApiException("User not found by id: " + id));
     }
 
     private UserEntity getUserEntityByEmail(String email) {
