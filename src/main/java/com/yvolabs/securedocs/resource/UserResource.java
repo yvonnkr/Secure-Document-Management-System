@@ -2,7 +2,9 @@ package com.yvolabs.securedocs.resource;
 
 import com.yvolabs.securedocs.domain.Response;
 import com.yvolabs.securedocs.dto.User;
+import com.yvolabs.securedocs.dtorequest.EmailRequest;
 import com.yvolabs.securedocs.dtorequest.QrCodeRequest;
+import com.yvolabs.securedocs.dtorequest.ResetPasswordRequest;
 import com.yvolabs.securedocs.dtorequest.UserRequest;
 import com.yvolabs.securedocs.enumeration.TokenType;
 import com.yvolabs.securedocs.service.JwtService;
@@ -99,6 +101,26 @@ public class UserResource {
                 .build();
         return ResponseEntity.ok(res);
     }
+
+    // START - Reset password endpoints flow when NOT LOGGED-IN
+    @PostMapping("/resetpassword")
+    public ResponseEntity<Response> resetPassword(@RequestBody @Valid EmailRequest emailRequest, HttpServletRequest request) {
+        userService.resetPassword(emailRequest.getEmail());
+        return ResponseEntity.ok().body(getResponse(request, emptyMap(), "We sent you an email to reset your password", OK));
+    }
+
+    @GetMapping("/verify/password")
+    public ResponseEntity<Response> verifyPassword(@RequestParam("key") String key, HttpServletRequest request) {
+        User user = userService.verifyPasswordKey(key);
+        return ResponseEntity.ok().body(getResponse(request, Map.of("user", user), "Enter new password", OK));
+    }
+
+    @PostMapping("/resetpassword/reset")
+    public ResponseEntity<Response> doResetPassword(@RequestBody @Valid ResetPasswordRequest resetPasswordRequest, HttpServletRequest request) {
+        userService.updatePassword(resetPasswordRequest.getUserId(), resetPasswordRequest.getNewPassword(), resetPasswordRequest.getConfirmNewPassword());
+        return ResponseEntity.ok().body(getResponse(request, emptyMap(), "Password reset successfully", OK));
+    }
+    // END - Reset password endpoints flow when NOT LOGGED-IN
 
 
     private URI getUri() {
