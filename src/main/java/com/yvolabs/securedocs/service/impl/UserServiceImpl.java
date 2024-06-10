@@ -35,6 +35,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 import static com.yvolabs.securedocs.utils.UserUtils.*;
+import static com.yvolabs.securedocs.validation.UserValidation.verifyAccountStatus;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 
@@ -180,6 +181,41 @@ public class UserServiceImpl implements UserService {
 
     }
 
+    @Override
+    public void resetPassword(String email) {
+        UserEntity userEntity = getUserEntityByEmail(email);
+        ConfirmationEntity existingConfirmation = getUserConfirmation(userEntity);
+        if (existingConfirmation != null) {
+            //send email EVENT using existing confirmation
+            publisher.publishEvent(new UserEvent(userEntity, EventType.RESETPASSWORD, Map.of("key", existingConfirmation.getKey())));
+        } else {
+            // create a new confirmation & send resetPassword email EVENT with new confirmation
+            ConfirmationEntity newConfirmation = new ConfirmationEntity(userEntity);
+            confirmationRepository.save(newConfirmation);
+            publisher.publishEvent(new UserEvent(userEntity, EventType.RESETPASSWORD, Map.of("key", newConfirmation.getKey())));
+        }
+    }
+
+    @Override
+    public User verifyPasswordKey(String key) {
+        ConfirmationEntity confirmationEntity = getUserConfirmation(key);
+        UserEntity userEntity = getUserEntityByEmail(confirmationEntity.getUserEntity().getEmail());
+        verifyAccountStatus(userEntity);
+        confirmationRepository.delete(confirmationEntity);
+        return fromUserEntity(userEntity, userEntity.getRole(), getUserCredentialById(userEntity.getId()));
+    }
+
+    @Override
+    public void updatePassword(String userId, String newPassword, String confirmNewPassword) {
+        if (!confirmNewPassword.equals(newPassword)) {
+            throw new ApiException("Passwords don't match. Please try again.");
+        }
+        UserEntity userEntity = getUserEntityByUserId(userId);
+        CredentialEntity credential = getUserCredentialById(userEntity.getId());
+        credential.setPassword(encoder.encode(newPassword));
+        credentialRepository.save(credential);
+    }
+
     /**
      *
      * @param qrCode is the code received by user after scanning the qrCode, usually some digits
@@ -214,6 +250,11 @@ public class UserServiceImpl implements UserService {
     private ConfirmationEntity getUserConfirmation(String key) {
         return confirmationRepository.findByKey(key)
                 .orElseThrow(() -> new ApiException("Confirmation key not found"));
+    }
+
+    private ConfirmationEntity getUserConfirmation(UserEntity userEntity) {
+        return confirmationRepository.findByUserEntity(userEntity)
+                .orElse(null);
     }
 
     private UserEntity createNewUser(String firstName, String lastName, String email) {
