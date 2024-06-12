@@ -4,6 +4,7 @@ import com.yvolabs.securedocs.domain.Response;
 import com.yvolabs.securedocs.dto.User;
 import com.yvolabs.securedocs.dtorequest.*;
 import com.yvolabs.securedocs.enumeration.TokenType;
+import com.yvolabs.securedocs.handler.ApiLogoutHandler;
 import com.yvolabs.securedocs.service.JwtService;
 import com.yvolabs.securedocs.service.UserService;
 import com.yvolabs.securedocs.utils.RequestUtils;
@@ -12,6 +13,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -43,6 +45,7 @@ public class UserResource {
 
     private final UserService userService;
     private final JwtService jwtService;
+    private final ApiLogoutHandler apiLogoutHandler;
 
     @PostMapping("/register")
     public ResponseEntity<Response> saveUser(@RequestBody @Valid UserRequest user, HttpServletRequest request) {
@@ -184,6 +187,12 @@ public class UserResource {
     @GetMapping(value = "/image/{filename}", produces = {IMAGE_PNG_VALUE, IMAGE_JPEG_VALUE})
     public byte[] getPhoto(@PathVariable("filename") String filename) throws IOException {
         return Files.readAllBytes(Paths.get(PHOTO_DIRECTORY + filename));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Response> logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
+        apiLogoutHandler.logout(request, response, authentication);
+        return ResponseEntity.ok().body(getResponse(request, emptyMap(), "You've logged out successfully", OK));
     }
 
 
