@@ -30,12 +30,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.function.BiFunction;
 
+import static com.yvolabs.securedocs.constant.Constants.PHOTO_DIRECTORY;
 import static com.yvolabs.securedocs.utils.UserUtils.*;
 import static com.yvolabs.securedocs.validation.UserValidation.verifyAccountStatus;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 
@@ -135,7 +143,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getUserByUserId(String userId) {
-        var userEntity = userRepository.findUserByUserId(userId).orElseThrow(() -> new ApiException("User not found by id: " + userId));
+        var userEntity = userRepository.findUserByUserId(userId).orElseThrow(() -> new ApiException("User not found with id: " + userId));
         return fromUserEntity(userEntity, userEntity.getRole(), getUserCredentialById(userEntity.getId()));
     }
 
@@ -215,6 +223,105 @@ public class UserServiceImpl implements UserService {
         credential.setPassword(encoder.encode(newPassword));
         credentialRepository.save(credential);
     }
+
+    @Override
+    public void updatePassword(String userId, String currentPassword, String newPassword, String confirmNewPassword) {
+        if (!confirmNewPassword.equals(newPassword)) {
+            throw new ApiException("Passwords don't match. Please try again.");
+        }
+        UserEntity userEntity = getUserEntityByUserId(userId);
+        verifyAccountStatus(userEntity);
+
+        CredentialEntity credential = getUserCredentialById(userEntity.getId());
+        if (!encoder.matches(currentPassword, credential.getPassword())) {
+            throw new ApiException("Existing Password is incorrect. Please try again.");
+        }
+        credential.setPassword(encoder.encode(newPassword));
+        credentialRepository.save(credential);
+    }
+
+    @Override
+    public User updateUser(String userId, String firstName, String lastName, String email, String phone, String bio) {
+        UserEntity userEntity = getUserEntityByUserId(userId);
+        userEntity.setFirstName(firstName);
+        userEntity.setLastName(lastName);
+        userEntity.setEmail(email);
+        userEntity.setPhone(phone);
+        userEntity.setBio(bio);
+        userRepository.save(userEntity);
+        return fromUserEntity(userEntity, userEntity.getRole(), getUserCredentialById(userEntity.getId()));
+    }
+
+    @Override
+    public void updateRole(String userId, String role) {
+        UserEntity userEntity = getUserEntityByUserId(userId);
+        userEntity.setRole(getRoleName(role));
+        userRepository.save(userEntity);
+    }
+
+    @Override
+    public void toggleAccountExpired(String userId) {
+        UserEntity userEntity = getUserEntityByUserId(userId);
+        userEntity.setAccountNonExpired(!userEntity.isAccountNonExpired());
+        userRepository.save(userEntity);
+
+    }
+
+    @Override
+    public void toggleAccountLocked(String userId) {
+        UserEntity userEntity = getUserEntityByUserId(userId);
+        userEntity.setAccountNonLocked(!userEntity.isAccountNonLocked());
+        userRepository.save(userEntity);
+
+    }
+
+    @Override
+    public void toggleAccountEnabled(String userId) {
+        UserEntity userEntity = getUserEntityByUserId(userId);
+        userEntity.setEnabled(!userEntity.isEnabled());
+        userRepository.save(userEntity);
+
+    }
+
+    @Override
+    public void toggleCredentialsExpired(String userId) {
+        // Account credentials will be expired if the updatedAt is 90 days after createdAt (@see MappedSuperClass Auditable.class, @see UserUtils::isCredentialsNonExpired)
+        //set credential.setUpdatedAt to a past date that is over 90days in the past - in this case we passed the epoch time 01/01/1990
+        // this will trigger the logic to expire the credentials
+        UserEntity userEntity = getUserEntityByUserId(userId);
+        CredentialEntity credential = getUserCredentialById(userEntity.getId());
+        credential.setUpdatedAt(LocalDateTime.of(1990, 1, 1, 11, 11));
+        credentialRepository.save(credential);
+        // * Note: This logic maybe flawed as the Auditable class will override the updated date before saving.
+    }
+
+    @Override
+    public String uploadPhoto(String userId, MultipartFile file) {
+        UserEntity userEntity = getUserEntityByUserId(userId);
+        String photoUrl = photoFunction.apply(userId, file);
+        userEntity.setImageUrl(photoUrl + "?timestamp=" + System.currentTimeMillis()); // to make the url unique everytime its uploaded, we added timestamp
+        userRepository.save(userEntity);
+        return photoUrl;
+    }
+
+    private final BiFunction<String, MultipartFile, String> photoFunction = (id, file) -> {
+        String filename = id + ".png";
+        try {
+            //STORE FILE: for prod would store in cloud storage =  Eg AWS S3 bucket. This is for local testing only!!!
+            Path fileStorageLocation = Paths.get(PHOTO_DIRECTORY).toAbsolutePath().normalize();
+            if (!Files.exists(fileStorageLocation)) {
+                Files.createDirectories(fileStorageLocation);
+            }
+            Files.copy(file.getInputStream(), fileStorageLocation.resolve(filename), REPLACE_EXISTING);
+
+            return ServletUriComponentsBuilder
+                    .fromCurrentContextPath()
+                    .path("/user/image/" + filename)
+                    .toUriString();
+        } catch (Exception e) {
+            throw new ApiException("Unable to save image " + filename);
+        }
+    };
 
     /**
      *

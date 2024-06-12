@@ -37,11 +37,11 @@ public class Application {
 
             //Just Run Once to seed some roles to db, left for info purpose
 
-            /*
+/*
             RequestContext.setUserId(0L); // sets the context userId @see Auditable::createdBy, userId 0 will be the System User
 
             RoleEntity userRole = RoleEntity.builder()
-                    .name(Authority.USER.name()) //returns enum "USER" as a string
+                    .name(Authority.USER.name())
                     .authorities(Authority.USER)
                     .build();
             roleRepository.save(userRole);
@@ -52,9 +52,23 @@ public class Application {
                     .build();
             roleRepository.save(adminRole);
 
+            RoleEntity superAdminRole = RoleEntity.builder()
+                    .name(Authority.SUPER_ADMIN.name())
+                    .authorities(Authority.SUPER_ADMIN)
+                    .build();
+            roleRepository.save(superAdminRole);
+
+            RoleEntity managerRole = RoleEntity.builder()
+                    .name(Authority.MANAGER.name())
+                    .authorities(Authority.MANAGER)
+                    .build();
+            roleRepository.save(managerRole);
+
             RequestContext.start(); // clears the context userId
 
-             */
+
+
+ */
         };
 
     }

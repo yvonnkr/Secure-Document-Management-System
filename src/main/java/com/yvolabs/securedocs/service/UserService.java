@@ -4,6 +4,7 @@ import com.yvolabs.securedocs.dto.User;
 import com.yvolabs.securedocs.entity.CredentialEntity;
 import com.yvolabs.securedocs.entity.RoleEntity;
 import com.yvolabs.securedocs.enumeration.LoginType;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * @author Yvonne N
@@ -38,4 +39,20 @@ public interface UserService {
     User verifyPasswordKey(String key);
 
     void updatePassword(String userId, String newPassword, String confirmNewPassword);
+
+    void updatePassword(String userId, String currentPassword, String newPassword, String confirmNewPassword);
+
+    User updateUser(String userId, String firstName, String lastName, String email, String phone, String bio);
+
+    void updateRole(String userId, String role);
+
+    void toggleAccountExpired(String userId);
+
+    void toggleAccountLocked(String userId);
+
+    void toggleAccountEnabled(String userId);
+
+    void toggleCredentialsExpired(String userId);
+
+    String uploadPhoto(String userId, MultipartFile file);
 }
