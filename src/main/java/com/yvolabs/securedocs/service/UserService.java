@@ -6,6 +6,8 @@ import com.yvolabs.securedocs.entity.RoleEntity;
 import com.yvolabs.securedocs.enumeration.LoginType;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 /**
  * @author Yvonne N
  * @version 1.0
@@ -57,4 +59,7 @@ public interface UserService {
     String uploadPhoto(String userId, MultipartFile file);
 
     User getUserById(Long id);
+
+    List<User> getUsers();
+
 }
