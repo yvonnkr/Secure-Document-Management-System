@@ -24,7 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
 
-import static com.yvolabs.securedocs.constant.Constants.PHOTO_DIRECTORY;
+import static com.yvolabs.securedocs.constant.Constants.FILE_STORAGE_DIRECTORY;
 import static com.yvolabs.securedocs.utils.RequestUtils.getResponse;
 import static java.util.Collections.emptyMap;
 import static org.springframework.http.HttpStatus.CREATED;
@@ -186,7 +186,7 @@ public class UserResource {
 
     @GetMapping(value = "/image/{filename}", produces = {IMAGE_PNG_VALUE, IMAGE_JPEG_VALUE})
     public byte[] getPhoto(@PathVariable("filename") String filename) throws IOException {
-        return Files.readAllBytes(Paths.get(PHOTO_DIRECTORY + filename));
+        return Files.readAllBytes(Paths.get(FILE_STORAGE_DIRECTORY + filename));
     }
 
     @PostMapping("/logout")

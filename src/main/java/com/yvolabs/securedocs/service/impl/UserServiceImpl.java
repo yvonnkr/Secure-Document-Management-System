@@ -40,7 +40,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.function.BiFunction;
 
-import static com.yvolabs.securedocs.constant.Constants.PHOTO_DIRECTORY;
+import static com.yvolabs.securedocs.constant.Constants.FILE_STORAGE_DIRECTORY;
 import static com.yvolabs.securedocs.utils.UserUtils.*;
 import static com.yvolabs.securedocs.validation.UserValidation.verifyAccountStatus;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -304,11 +304,18 @@ public class UserServiceImpl implements UserService {
         return photoUrl;
     }
 
+    @Override
+    public User getUserById(Long id) {
+        UserEntity userEntity = userRepository.findById(id)
+                .orElseThrow(() -> new ApiException("User not found with id: " + id));
+        return fromUserEntity(userEntity, userEntity.getRole(), getUserCredentialById(userEntity.getId()));
+    }
+
     private final BiFunction<String, MultipartFile, String> photoFunction = (id, file) -> {
         String filename = id + ".png";
         try {
             //STORE FILE: for prod would store in cloud storage =  Eg AWS S3 bucket. This is for local testing only!!!
-            Path fileStorageLocation = Paths.get(PHOTO_DIRECTORY).toAbsolutePath().normalize();
+            Path fileStorageLocation = Paths.get(FILE_STORAGE_DIRECTORY).toAbsolutePath().normalize();
             if (!Files.exists(fileStorageLocation)) {
                 Files.createDirectories(fileStorageLocation);
             }

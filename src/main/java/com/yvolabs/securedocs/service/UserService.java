@@ -55,4 +55,6 @@ public interface UserService {
     void toggleCredentialsExpired(String userId);
 
     String uploadPhoto(String userId, MultipartFile file);
+
+    User getUserById(Long id);
 }
