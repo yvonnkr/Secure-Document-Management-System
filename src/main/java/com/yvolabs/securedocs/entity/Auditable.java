@@ -1,6 +1,7 @@
 package com.yvolabs.securedocs.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.yvolabs.securedocs.domain.RequestContext;
 import com.yvolabs.securedocs.exception.ApiException;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -54,9 +55,8 @@ public class Auditable {
 
     @PrePersist
     public void beforePersist() {
-//        Long userId = RequestContext.getUserId();
-        Long userId = 0L; // todo: set as system user_id 0 temporally, will set the user_id in the context automatically using spring filter (spring-security)
-
+        //Long userId = 0L; // set as system user_id 0 temporally for testing
+        Long userId = RequestContext.getUserId();
         if (userId == null) {
             throw new ApiException("Cannot persist entity without user ID in Request Context for this thread");
         }
@@ -69,9 +69,8 @@ public class Auditable {
 
     @PreUpdate
     public void beforeUpdate() {
-//        Long userId = RequestContext.getUserId();
-        Long userId = 0L; // todo: set as system user_id 0 temporally, will set the user_id in the context automatically using spring filter (spring-security)
-
+        //Long userId = 0L; // set as system user_id 0 temporally for testing
+        Long userId = RequestContext.getUserId();
         if (userId == null) {
             throw new ApiException("Cannot update entity without user ID in Request Context for this thread");
         }
@@ -79,6 +78,5 @@ public class Auditable {
         setUpdatedAt(now());
         setUpdatedBy(userId);
     }
-
 
 }

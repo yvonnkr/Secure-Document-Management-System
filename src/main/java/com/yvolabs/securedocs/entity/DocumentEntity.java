@@ -38,7 +38,6 @@ public class DocumentEntity extends Auditable {
             referencedColumnName = "id",
             foreignKey = @ForeignKey(
                     name = "fk_documents_owner",
-                    foreignKeyDefinition = "foreign key /* FK */ (user_id) references UserEntity",
                     value = ConstraintMode.CONSTRAINT
             )
     )
