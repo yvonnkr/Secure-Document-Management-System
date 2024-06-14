@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
 
 import static com.yvolabs.securedocs.constant.Constants.FILE_STORAGE_DIRECTORY;
@@ -66,6 +68,7 @@ public class UserResource {
     }
 
     @PatchMapping("/mfa/setup")
+    @PreAuthorize("hasAnyAuthority('user:update') or hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<Response> setupMfa(@AuthenticationPrincipal User userPrincipal, HttpServletRequest request) {
         User user = userService.setUpMfa(userPrincipal.getId());
         Response response = RequestUtils.getResponseBuilder()
@@ -79,6 +82,7 @@ public class UserResource {
     }
 
     @PatchMapping("/mfa/cancel")
+    @PreAuthorize("hasAnyAuthority('user:update') or hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<Response> cancelMfa(@AuthenticationPrincipal User userPrincipal, HttpServletRequest request) {
         User user = userService.cancelMfa(userPrincipal.getId());
         Response response = RequestUtils.getResponseBuilder()
@@ -129,43 +133,58 @@ public class UserResource {
     }
     // END - Reset password endpoints flow when NOT LOGGED-IN
 
+    @GetMapping("/list")
+    @PreAuthorize("hasAnyAuthority('user:update') or hasAnyRole('ADMIN','SUPER_ADMIN')")
+    public ResponseEntity<Response> getUsers(@AuthenticationPrincipal User userPrincipal, HttpServletRequest request) {
+        List<User> users = userService.getUsers();
+        return ResponseEntity.ok(getResponse(request, Map.of("users", users), "Users retrieved", OK));
+
+    }
+
     @GetMapping("/profile")
+    @PreAuthorize("hasAnyAuthority('user:read') or hasAnyRole('USER','ADMIN','SUPER_ADMIN')")
     public ResponseEntity<Response> getUserProfile(@AuthenticationPrincipal User userPrincipal, HttpServletRequest request) {
         User user = userService.getUserByUserId(userPrincipal.getUserId());
         return ResponseEntity.ok().body(getResponse(request, Map.of("user", user), "Profile retrieved", OK));
     }
 
     @PatchMapping("/profile/update")
+    @PreAuthorize("hasAnyAuthority('user:update') or hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<Response> updateUserProfile(@AuthenticationPrincipal User userPrincipal, @RequestBody UserRequest userRequest, HttpServletRequest request) {
         User user = userService.updateUser(userPrincipal.getUserId(), userRequest.getFirstName(), userRequest.getLastName(), userRequest.getEmail(), userRequest.getPhone(), userRequest.getBio());
         return ResponseEntity.ok().body(getResponse(request, Map.of("user", user), "User updated successfully", OK));
     }
 
     @PatchMapping("/update-role")
+    @PreAuthorize("hasAnyAuthority('user:update') or hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<Response> updateRole(@AuthenticationPrincipal User userPrincipal, @RequestBody RoleRequest roleRequest, HttpServletRequest request) {
         userService.updateRole(userPrincipal.getUserId(), roleRequest.getRole());
         return ResponseEntity.ok().body(getResponse(request, emptyMap(), "Role updated successfully", OK));
     }
 
     @PatchMapping("/toggle-account-expired")
+    @PreAuthorize("hasAnyAuthority('user:update') or hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<Response> toggleAccountExpired(@AuthenticationPrincipal User userPrincipal, HttpServletRequest request) {
         userService.toggleAccountExpired(userPrincipal.getUserId());
         return ResponseEntity.ok().body(getResponse(request, emptyMap(), "Toggle Account Expired Success", OK));
     }
 
     @PatchMapping("/toggle-account-locked")
+    @PreAuthorize("hasAnyAuthority('user:update') or hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<Response> toggleAccountLocked(@AuthenticationPrincipal User userPrincipal, HttpServletRequest request) {
         userService.toggleAccountLocked(userPrincipal.getUserId());
         return ResponseEntity.ok().body(getResponse(request, emptyMap(), "Toggle Account Locked Success", OK));
     }
 
     @PatchMapping("/toggle-account-enabled")
+    @PreAuthorize("hasAnyAuthority('user:update') or hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<Response> toggleAccountEnabled(@AuthenticationPrincipal User userPrincipal, HttpServletRequest request) {
         userService.toggleAccountEnabled(userPrincipal.getUserId());
         return ResponseEntity.ok().body(getResponse(request, emptyMap(), "Toggle Account Enabled Success", OK));
     }
 
     @PatchMapping("/toggle-credentials-expired")
+    @PreAuthorize("hasAnyAuthority('user:update') or hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<Response> toggleCredentialsExpired(@AuthenticationPrincipal User userPrincipal, HttpServletRequest request) {
         userService.toggleCredentialsExpired(userPrincipal.getUserId());
         return ResponseEntity.ok().body(getResponse(request, emptyMap(), "Toggle Credential Expired Success", OK));
@@ -173,12 +192,14 @@ public class UserResource {
 
     // START - Reset password endpoint when LOGGED-IN
     @PatchMapping("/update-password")
+    @PreAuthorize("hasAnyAuthority('user:update') or hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<Response> updatePassword(@AuthenticationPrincipal User userPrincipal, @RequestBody UpdatePasswordRequest passwordRequest, HttpServletRequest request) {
         userService.updatePassword(userPrincipal.getUserId(), passwordRequest.getCurrentPassword(), passwordRequest.getNewPassword(), passwordRequest.getConfirmNewPassword());
         return ResponseEntity.ok().body(getResponse(request, emptyMap(), "Password updated successfully", OK));
     }
 
     @PatchMapping("/upload-photo")
+    @PreAuthorize("hasAnyAuthority('user:update') or hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<Response> uploadPhoto(@AuthenticationPrincipal User userPrincipal, @RequestParam("file") MultipartFile file, HttpServletRequest request) {
         String imageUrl = userService.uploadPhoto(userPrincipal.getUserId(), file);
         return ResponseEntity.ok().body(getResponse(request, Map.of("file", imageUrl), "Photo uploaded successfully", OK));

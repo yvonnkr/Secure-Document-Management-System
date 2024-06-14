@@ -37,6 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
@@ -309,6 +310,19 @@ public class UserServiceImpl implements UserService {
         UserEntity userEntity = userRepository.findById(id)
                 .orElseThrow(() -> new ApiException("User not found with id: " + id));
         return fromUserEntity(userEntity, userEntity.getRole(), getUserCredentialById(userEntity.getId()));
+    }
+
+    @Override
+    public List<User> getUsers() {
+        List<UserEntity> userEntities = userRepository.findAll();
+        return userEntities.stream()
+                .map((userEntity) -> {
+                    if (userEntity.getId() != 0L) {
+                        return fromUserEntity(userEntity, userEntity.getRole(), getUserCredentialById(userEntity.getId()));
+                    }
+                    return null;
+                })
+                .toList();
     }
 
     private final BiFunction<String, MultipartFile, String> photoFunction = (id, file) -> {
