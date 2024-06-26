@@ -14,7 +14,8 @@ EMAIL_HOST: smtp.gmail.com
 EMAIL_PORT: 587
 EMAIL_ID: ${EMAIL_ID}
 EMAIL_PASSWORD: ${EMAIL_PASSWORD}
-VERIFY_EMAIL_HOST: http://localhost:8085
+VERIFY_EMAIL_HOST: http://localhost:5173 # front-end
+#VERIFY_EMAIL_HOST: http://localhost:8085
 
 #jwt
 JWT_EXPIRATION: 432_000_00 # ms = 5days
