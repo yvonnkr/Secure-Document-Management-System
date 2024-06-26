@@ -98,18 +98,18 @@ public class JwtServiceImpl extends JwtConfiguration implements JwtService {
                 var accessToken = createToken(user, Token::getAccess);
                 var cookie = new Cookie(type.getValue(), accessToken);
                 cookie.setHttpOnly(true);
-                //cookie.setSecure(true); // this only works on https, local is http hence why it's commented out, till we deploy to secure server
+                cookie.setSecure(true); // this only works on https, local is http
                 cookie.setMaxAge(2 * 60);
                 cookie.setPath("/"); //root path
                 cookie.setAttribute("SameSite", NONE.name());
-                response.addCookie(cookie); // response will be in the cookie once we send a response to the user
+                response.addCookie(cookie);
 
             }
             case REFRESH -> {
                 var refreshToken = createToken(user, Token::getRefresh);
                 var cookie = new Cookie(type.getValue(), refreshToken);
                 cookie.setHttpOnly(true);
-                //cookie.setSecure(true);
+                cookie.setSecure(true);
                 cookie.setMaxAge(2 * 60 * 60);
                 cookie.setPath("/");
                 cookie.setAttribute("SameSite", NONE.name());

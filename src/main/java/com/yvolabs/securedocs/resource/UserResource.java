@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static com.yvolabs.securedocs.constant.Constants.FILE_STORAGE_DIRECTORY;
 import static com.yvolabs.securedocs.utils.RequestUtils.getResponse;
@@ -59,12 +60,10 @@ public class UserResource {
     }
 
     @GetMapping("/verify/account")
-    public ResponseEntity<Response> verifyUser(@RequestParam("key") String key, HttpServletRequest request) {
-
+    public ResponseEntity<Response> verifyUser(@RequestParam("key") String key, HttpServletRequest request) throws InterruptedException {
+        TimeUnit.SECONDS.sleep(3);// simulate verification delay
         userService.verifyAccountKey(key);
-
-        return ResponseEntity.ok()
-                .body(getResponse(request, emptyMap(), "Account verified", OK));
+        return ResponseEntity.ok(getResponse(request, emptyMap(), "Account verified", OK));
     }
 
     @PatchMapping("/mfa/setup")
